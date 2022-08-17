@@ -23,6 +23,7 @@ class DelegateRenderFieldBlocBuilder extends StatefulWidget {
     this.onEditingComplete,
     this.onSubmitted,
     this.padding,
+    this.onTap,
   }) : super(key: key);
 
   final DelegateRenderCallback? delegateRenderCallback;
@@ -51,6 +52,8 @@ class DelegateRenderFieldBlocBuilder extends StatefulWidget {
   /// The amount of space by which to inset the child.
   /// {@endtemplate}
   final EdgeInsetsGeometry? padding;
+
+  final VoidCallback? onTap;
 
   /// --------------------------------------------------------------------------
   ///                          [TextField] properties
@@ -133,13 +136,14 @@ class _TextFieldBlocBuilderState extends State<DelegateRenderFieldBlocBuilder> {
             }
 
             if (widget.delegateRenderCallback == null) {
-              return SizedBox();
+              return const SizedBox();
             }
             return DefaultFieldBlocBuilderPadding(
               padding: widget.padding,
               child: _buildTextField(
                 state: state,
                 delegateRenderCallback: widget.delegateRenderCallback,
+                onTap: widget.onTap,
               ),
             );
           },
@@ -151,7 +155,11 @@ class _TextFieldBlocBuilderState extends State<DelegateRenderFieldBlocBuilder> {
   Widget _buildTextField({
     required TextFieldBlocState state,
     required delegateRenderCallback,
+    onTap,
   }) {
-    return delegateRenderCallback({'value': state.value});
+    return InkWell(
+      onTap: onTap?.call(),
+      child: delegateRenderCallback({'value': state.value}),
+    );
   }
 }
