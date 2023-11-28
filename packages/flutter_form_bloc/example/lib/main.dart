@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -42,6 +43,10 @@ class App extends StatelessWidget {
 class AllFieldsFormBloc extends FormBloc<String, String> {
   final text1 = TextFieldBloc();
 
+  final hidden1 = TextFieldBloc();
+
+  final delegate1 = TextFieldBloc();
+
   final boolean1 = BooleanFieldBloc();
 
   final boolean2 = BooleanFieldBloc();
@@ -77,9 +82,15 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
     initialValue: 0.5,
   );
 
-  AllFieldsFormBloc() : super(autoValidate: false) {
+  AllFieldsFormBloc()
+      : super(
+          autoValidate: true,
+          isLoading: true,
+        ) {
     addFieldBlocs(fieldBlocs: [
       text1,
+      hidden1,
+      delegate1,
       boolean1,
       boolean2,
       select1,
@@ -107,12 +118,24 @@ class AllFieldsFormBloc extends FormBloc<String, String> {
   @override
   void onSubmitting() async {
     try {
-      await Future<void>.delayed(const Duration(milliseconds: 500));
-
-      emitSuccess(canSubmitAgain: true);
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      emitSuccess(
+        canSubmitAgain: true,
+        successResponse: const JsonEncoder.withIndent('    ').convert(
+          state.toJson(),
+        ),
+      );
     } catch (e) {
       emitFailure();
     }
+  }
+
+  @override
+  void onLoading() async {
+    hidden1.updateInitialValue('new hidden value');
+    delegate1.updateInitialValue('new delegate value');
+
+    emitLoaded();
   }
 }
 
@@ -152,10 +175,17 @@ class AllFieldsForm extends StatelessWidget {
                 LoadingDialog.show(context);
               },
               onSuccess: (context, state) {
+                print('Success !');
+                print('response : ${state.successResponse}');
+
                 LoadingDialog.hide(context);
 
                 Navigator.of(context).pushReplacement(
                     MaterialPageRoute(builder: (_) => const SuccessScreen()));
+              },
+              onSubmissionFailed: (context, state) {
+                print('Submission Failed ! : ${state.toJson()}');
+                LoadingDialog.hide(context);
               },
               onFailure: (context, state) {
                 LoadingDialog.hide(context);
@@ -176,6 +206,19 @@ class AllFieldsForm extends StatelessWidget {
                           labelText: 'TextFieldBlocBuilder',
                           prefixIcon: Icon(Icons.text_fields),
                         ),
+                      ),
+                      HiddenFieldBlocBuilder(
+                        textFieldBloc: formBloc.hidden1,
+                      ),
+                      DelegateRenderFieldBlocBuilder(
+                        textFieldBloc: formBloc.delegate1,
+                        delegateRenderCallback: (Map<String, dynamic> params) {
+                          return Icon(
+                            Icons.accessibility_new,
+                            size: 50,
+                            color: Colors.deepOrange,
+                          );
+                        },
                       ),
                       RadioButtonGroupFieldBlocBuilder<String>(
                         selectFieldBloc: formBloc.select2,
